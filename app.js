@@ -1,6 +1,8 @@
 const mysql = require("mysql2/promise");
-// const env=require("dotenv");
-process.loadEnvFile();
+//require("dotenv").config();//uses the dotenv package, which you install with npm install dotenv. It has extra options, like loading a different file or overriding existing variables.
+
+process.loadEnvFile();//is built into Node.js (since v20.12 / v21.7), so there's nothing to install. It reads ./.env by default, or you can pass a path: process.loadEnvFile("./config/.env").
+
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST,

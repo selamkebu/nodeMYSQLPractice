@@ -1,8 +1,17 @@
 const mysql = require("mysql2/promise");
-// const env=require("dotenv");
 process.loadEnvFile();
+const express = require("express");
+const app = express();
+const cors = require("cors");
 
-const pool = mysql.createPool({
+// Adds headers: Access-Control-Allow-Origin: *
+app.use(cors());
+
+app.use(express.urlencoded({ extended: true })); // for HTML form
+
+app.use(express.json()); // for JSON bodies (e.g., from Postman)
+
+const connection = mysql.createPool({
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
   user: process.env.DB_USER,
@@ -12,23 +21,31 @@ const pool = mysql.createPool({
   connectionLimit: 10,
 });
 
-async function main() {
+async function testConnection() {
   try {
-    // A pool connects lazily, so borrow one connection to test the login
-    const connection = await pool.getConnection();
-    console.log("Connected to MySQL!");
-    connection.release(); // give it back to the pool (not end())
-
-    // Your own queries go here, for example:
-    // const [rows] = await pool.query("SELECT * FROM users");
-    // console.log(rows);
+    await connection.query("SELECT 1");
+    console.log("Connected to MySQL database");
   } catch (err) {
-    console.error("Database error:", err.message);
-    process.exitCode = 1;
-  } finally {
-    await pool.end(); // close all pooled connections so the script can exit
-    console.log("Pool closed.");
+    console.log("Database connection failed:", err.message);
   }
 }
+testConnection();//test the database connection
 
-main(); 
+app.get("/", (req, res) => {
+  res.send("Hello World");
+});
+
+// app.get("/users", async (req, res) => {
+//   try {
+//     const [rows] = await connection.query("SELECT * FROM users");
+//     res.json(rows);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+const PORT = process.env.PORT || 4000;
+
+app.listen(PORT, () =>
+  console.log(`Server running on: http://localhost:${PORT}`),
+);
