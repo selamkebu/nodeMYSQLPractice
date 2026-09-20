@@ -1,0 +1,3 @@
+# what we write in this file tells git not to push these files on github
+.env
+node_modules
