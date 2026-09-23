@@ -6,7 +6,7 @@ const cors = require("cors");//to allow your Express server to have
 //access to the form URL.
 
 const path = require("path");
-
+const bcrypt = require("bcrypt");//encrypts passwords
 
 // Adds headers: Access-Control-Allow-Origin: *
 app.use(cors());
@@ -120,37 +120,40 @@ app.get("/install", async (req, res) => {
 
 //the route to add the form data recived into the database
 app.post("/add-product", async (req, res) => {
-   const {
-     product_name,
-     product_url,
-     product_brief_description,
-     product_description,
-     product_img,
-     product_link,
-     starting_price,
-     price_range,
-     user_name,
-     user_password,
-   } = req.body;
+  const {
+    product_name,
+    product_url,
+    product_brief_description,
+    product_description,
+    product_img,
+    product_link,
+    starting_price,
+    price_range,
+    user_name,
+    user_password,
+  } = req.body;
 
-   if (!product_name || !starting_price || !user_name || !user_password) {
-     return res
-       .status(400)
-       .send(
-         "Product name, starting price, username, and password are required.",
-       );
-   }
+  if (!product_name || !starting_price || !user_name || !user_password) {
+    return res
+      .status(400)
+      .send(
+        "Product name, starting price, username, and password are required.",
+      );
+  }
 
+  const conn = await pool.getConnection(); // borrow one connection
   try {
-    // 1. product_table
-    const [result] = await pool.query(
+    await conn.beginTransaction(); // start the transaction
+
+    // 1. products_table
+    const [result] = await conn.query(
       "INSERT INTO products_table (product_name, product_url) VALUES (?, ?)",
       [product_name, product_url || null],
     );
     const productId = result.insertId;
 
     // 2. product_description_table
-    await pool.query(
+    await conn.query(
       `INSERT INTO product_description_table
         (product_id, product_brief_description, product_description, product_img, product_link)
        VALUES (?, ?, ?, ?, ?)`,
@@ -162,37 +165,44 @@ app.post("/add-product", async (req, res) => {
         product_link || null,
       ],
     );
-    
+
     // 3. product_price_table
-    await pool.query(
+    await conn.query(
       "INSERT INTO product_price_table (product_id, starting_price, price_range) VALUES (?, ?, ?)",
       [productId, starting_price, price_range || null],
     );
 
-    // 3. user_table
-    const [userResult] = await pool.query(
+    // 4. users_table
+    const hashedPassword = await bcrypt.hash(user_password, 10);
+    const [userResult] = await conn.query(
       "INSERT INTO users_table (user_name, user_password) VALUES (?, ?)",
-      [user_name, user_password], // plain text for now — see the hashing note below
+      [user_name, hashedPassword], // plain text for now — see the hashing note below
     );
     const userId = userResult.insertId;
 
-    // 3. order_table
-    await pool.query(
+    // 5. orders_table
+    await conn.query(
       "INSERT INTO orders_table (product_id, user_id) VALUES (?, ?)",
       [productId, userId],
     );
 
+    await conn.commit(); // save everything at once
+    res.send(
+      `Saved: product ${productId}, user ${userId}. <a href="/">Add another</a>`,
+    );
     console.log("product saved");
-    res.send(`Product saved`);
   } catch (err) {
-    console.log("Failed to save product:", err.message);
-    res.status(500).send("Failed to save the product: " + err.message);
+    await conn.rollback(); // undo everything from this transaction
+    console.log("Failed to save:", err.message);
+    res.status(500).send("Failed to save: " + err.message);
+  } finally {
+    conn.release(); // always return the connection to the pool
   }
 });
 
 
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT;
 
 app.listen(PORT, () =>
   console.log(`Server running on: http://localhost:${PORT}`),
