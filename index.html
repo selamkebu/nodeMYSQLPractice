@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Add a product</title>
+</head>
+<body>
+  <h1>Add a product</h1>
+
+  <form method="POST" action="/add-product">
+
+    <h2>Product</h2>
+
+    <label for="product_name">Product name</label><br />
+    <input type="text" id="product_name" name="product_name" required /><br /><br />
+
+    <label for="product_url">Product URL</label><br />
+    <input type="url" id="product_url" name="product_url" placeholder="https://example.com" /><br /><br />
+
+    <h2>Description</h2>
+
+    <label for="product_brief_description">Brief description</label><br />
+    <textarea id="product_brief_description" name="product_brief_description"></textarea><br /><br />
+
+    <label for="product_description">Full description</label><br />
+    <textarea id="product_description" name="product_description"></textarea><br /><br />
+
+    <label for="product_img">Product image URL</label><br />
+    <input type="url" id="product_img" name="product_img" placeholder="https://example.com/image.jpg" /><br /><br />
+
+    <label for="product_link">Product link</label><br />
+    <input type="url" id="product_link" name="product_link" placeholder="https://example.com/product" /><br /><br />
+
+    <h2>Price</h2>
+
+    <label for="starting_price">Starting price</label><br />
+    <input type="number" id="starting_price" name="starting_price" min="0" step="0.01" required /><br /><br />
+
+    <label for="price_range">Price range</label><br />
+    <input type="text" id="price_range" name="price_range" placeholder="25,000 - 32,000" /><br /><br />
+
+    <h2>User</h2>
+
+    <label for="user_name">Username</label><br />
+    <input type="text" id="user_name" name="user_name" required /><br /><br />
+
+    <label for="user_password">Password</label><br />
+    <input type="password" id="user_password" name="user_password" required /><br /><br />
+
+    <h2>Order</h2>
+    <p>An order links the user above to the product above, placed at the same time.</p>
+
+    <button type="submit">Save</button>
+  </form>
+</body>
+</html>
