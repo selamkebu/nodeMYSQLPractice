@@ -142,7 +142,7 @@ app.post("/add-product", async (req, res) => {
    }
 
   try {
-    // 1. product_price_table
+    // 1. product_table
     const [result] = await pool.query(
       "INSERT INTO products_table (product_name, product_url) VALUES (?, ?)",
       [product_name, product_url || null],
